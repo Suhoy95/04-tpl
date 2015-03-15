@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using System.Text.RegularExpressions;
 
 namespace JapaneseCrossword
 {
@@ -6,7 +8,19 @@ namespace JapaneseCrossword
     {
         public SolutionStatus Solve(string inputFilePath, string outputFilePath)
         {
-            throw new NotImplementedException();
+            if (!File.Exists(inputFilePath)) return SolutionStatus.BadInputFilePath;
+            if (!FileNameCorrecter.IsCorrectedFileName(inputFilePath) &&
+                !FileNameCorrecter.IsCorrectedFileName(outputFilePath))
+                return SolutionStatus.BadOutputFilePath;
+
+            var field = new CrosswordField(inputFilePath);
+
+            if(!field.IsCorrect())
+                return SolutionStatus.IncorrectCrossword;
+
+            return SolutionStatus.Solved;
         }
     }
+
+   
 }

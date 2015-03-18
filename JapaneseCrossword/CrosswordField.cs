@@ -38,9 +38,10 @@ namespace JapaneseCrossword
         public override string ToString()
         {
             var ans = new StringBuilder((width + 1)*height);
-            for (var y = 0; y < width; y++)
+
+            for (var y = 0; y < height; y++) 
             {
-                for (var x = 0; x < height; x++)
+                for (var x = 0; x < width; x++)
                     ans.Append(field[x][y].ToChar());
                 ans.Append("\r\n");
             }
@@ -91,6 +92,11 @@ namespace JapaneseCrossword
                 return;
             }
             throw new Exception("SetColumn: Invalid parametr");
-        }       
+        }
+
+        public bool HaveFuzzy()
+        {
+            return field.Any(column => column.Any(cell => cell.ToChar() == '?'));
+        }
     }
 }

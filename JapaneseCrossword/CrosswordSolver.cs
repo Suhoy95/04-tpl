@@ -9,8 +9,6 @@ namespace JapaneseCrossword
     {
         private CrosswordField field;
         private Stack<int> luckyLines = new Stack<int>();
-        private SolutionStatus result;
-
         private SolutionStatus Init(string inputFilePath, string outputFilePath)
         {
             if (!File.Exists(inputFilePath)) return SolutionStatus.BadInputFilePath;
@@ -31,33 +29,50 @@ namespace JapaneseCrossword
             var resultInit = Init(inputFilePath, outputFilePath);
             if (resultInit != SolutionStatus.PartiallySolved) return resultInit;
 
-            for(var i = 0; i < field.width + field.height - 1; i++)
+            for(var i = 0; i < field.width + field.height; i++)
             {
                 TryLine(i);
                 while (luckyLines.Count > 0)
+                {
+                    i = -1;
                     TryLine(luckyLines.Pop());
+                }
             }
 
             File.WriteAllText(outputFilePath, field.ToString());
 
-            return SolutionStatus.Solved;
+            return field.HaveFuzzy() ? SolutionStatus.PartiallySolved : SolutionStatus.Solved;
         }
 
         private void TryLine(int number)
         {
             var prevLine = GetLine(number);
-            var newLine = RobinBlock(GetLine(number), GetBlocks(number));
+            var newLine = TryBlock(0, -1, GetLine(number), GetBlocks(number), 0);
             if (IsDifferentLine(prevLine, newLine, number < field.width))
                 SetLine(number, newLine);
         }
 
-        private Cell[] RobinBlock(Cell[] line, int[] blocks)
-        {
-            return TryBlock(0, -1, line, blocks, 0);
-        }
-
         private Cell[] TryBlock(int width, int pos, Cell[] line, int[] blocks, int nextBlock)
         {
+            var limit = line.Length;
+            for (var i = pos; i < limit; i++)
+            {
+                var can = Enumerable.Range(0, width).All(j => 0 <= i+j && i+j < line.Length && line[i + j].CanBe(Sost.Shaded)); // true if width==0
+                can = can && Enumerable.Range(pos, i - pos).All(j => j < 0 || line[j].CanBe(Sost.Empty));
+                can = can &&
+                      (nextBlock < blocks.Length ||
+                       Enumerable.Range(i + width, line.Length - i - width).All(j => line[j].CanBe(Sost.Empty)));
+                if (can)
+                {
+                    Enumerable.Range(0, width).All(j => line[i + j].TrySet(Sost.Shaded));
+                    Enumerable.Range(pos, i - pos).All(j => pos == -1 || j < 0 || line[j].TrySet(Sost.Empty));
+                    if(nextBlock >= blocks.Length)
+                        Enumerable.Range(i + width, line.Length - i - width).All(j => line[j].TrySet(Sost.Empty));
+                }
+                if (can && nextBlock < blocks.Length)
+                    line = TryBlock(blocks[nextBlock], i + width, line, blocks, nextBlock + 1);
+            }
+
             return line;
         }
 
@@ -111,6 +126,4 @@ namespace JapaneseCrossword
             field.SetRow(number - field.width, newLine);
         }
     }
-
-   
 }

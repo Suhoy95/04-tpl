@@ -8,10 +8,12 @@ namespace JapaneseCrossword
 {
     public class FileNameCorrecter
     {
+        private static Regex nameMask = new Regex(@"[^/&#*?<>|]+\.[^/&#*?<>|]+");
+        private static Regex nameWithPath = new Regex(@"[^/&#*?<>|]+\\.+\.[^/&#*?<>|]+");
         public static bool IsCorrectedFileName(string filename)
         {
-            return filename.IndexOfAny(Path.GetInvalidFileNameChars()) < 0;
-
+            return filename.IndexOfAny(Path.GetInvalidPathChars()) < 0 && 
+                (nameMask.IsMatch(filename) || nameWithPath.IsMatch(filename));
         }
     }
 

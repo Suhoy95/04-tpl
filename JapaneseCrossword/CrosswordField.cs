@@ -37,7 +37,7 @@ namespace JapaneseCrossword
 
         public override string ToString()
         {
-            var ans = new StringBuilder((width + 1)*height);
+            var ans = new StringBuilder((width + 2)*height);
 
             for (var y = 0; y < height; y++) 
             {
@@ -53,8 +53,8 @@ namespace JapaneseCrossword
         {
             var columnSum = vBlocks.Sum(block => block.Sum());
             var rawSum = gBlocks.Sum(block => block.Sum());
-            return vBlocks.All(block => block.Sum() <= height + 1 - block.Length) &&
-                   gBlocks.All(block => block.Sum() <= width + 1 - block.Length) &&
+            return vBlocks.All(block => block.Sum() <= height - (block.Length - 1)) &&
+                   gBlocks.All(block => block.Sum() <= width - (block.Length - 1)) &&
                    columnSum == rawSum && rawSum <= width * height;
         }
 

@@ -24,6 +24,11 @@ namespace JapaneseCrossword
             return SolutionStatus.PartiallySolved;
         }
 
+        public override string ToString()
+        {
+            return field != null ? field.ToString() : "";
+        }
+
         public SolutionStatus Solve(string inputFilePath, string outputFilePath)
         {
             var resultInit = Init(inputFilePath, outputFilePath);
@@ -47,25 +52,25 @@ namespace JapaneseCrossword
         private void TryLine(int number)
         {
             var prevLine = GetLine(number);
-            var newLine = TryBlock(0, -1, GetLine(number), GetBlocks(number), 0);
+            var newLine = TryBlock(0, 0, GetLine(number), GetBlocks(number), 0);
             if (IsDifferentLine(prevLine, newLine, number < field.width))
                 SetLine(number, newLine);
         }
 
         private Cell[] TryBlock(int width, int pos, Cell[] line, int[] blocks, int nextBlock)
         {
-            var limit = line.Length;
+            var limit = line.Length - (blocks.Skip(nextBlock).Sum() + blocks.Skip(nextBlock).Count() + (width == 0 ? -1 : 0)) + 1;
             for (var i = pos; i < limit; i++)
             {
-                var can = Enumerable.Range(0, width).All(j => 0 <= i+j && i+j < line.Length && line[i + j].CanBe(Sost.Shaded)); // true if width==0
-                can = can && Enumerable.Range(pos, i - pos).All(j => j < 0 || line[j].CanBe(Sost.Empty));
+                var can = Enumerable.Range(0, width).All(j => i+j < line.Length && line[i + j].CanBe(Sost.Shaded));
+                can = can && Enumerable.Range(pos, i - pos).All(j => line[j].CanBe(Sost.Empty));
                 can = can &&
                       (nextBlock < blocks.Length ||
                        Enumerable.Range(i + width, line.Length - i - width).All(j => line[j].CanBe(Sost.Empty)));
                 if (can)
                 {
                     Enumerable.Range(0, width).All(j => line[i + j].TrySet(Sost.Shaded));
-                    Enumerable.Range(pos, i - pos).All(j => pos == -1 || j < 0 || line[j].TrySet(Sost.Empty));
+                    Enumerable.Range(pos, i - pos).All(j => width == 0 || line[j].TrySet(Sost.Empty));
                     if(nextBlock >= blocks.Length)
                         Enumerable.Range(i + width, line.Length - i - width).All(j => line[j].TrySet(Sost.Empty));
                 }

@@ -43,37 +43,49 @@ namespace JapaneseCrossword
             return field.Any(column => column.Any(cell => cell.ToChar() == '?'));
         }
 
-        public Cell[] GetRow(int number)
+        public Line GetRow(int number)
         {
             if (0 <= number && number < height)
-                return field.Select(column => column[number]).ToArray();
+            {
+                var line = new Line();
+                line.cells = field.Select(column => column[number]).ToArray();
+                line.blocks = hBlocks[number];
+                return line;
+            }
             throw new Exception("GetRow: number incorrect");
         }
 
-        public Cell[] GetColumn(int number)
+        public Line GetColumn(int number)
         {
             if (0 <= number && number < width)
-                return Enumerable.Range(0, height).Select(rawIndex => new Cell(field[number][rawIndex])).ToArray();
+            {
+                var line = new Line();
+                line.cells = Enumerable.Range(0, height)
+                                       .Select(rawIndex => new Cell(field[number][rawIndex]))
+                                       .ToArray();
+                line.blocks = vBlocks[number];
+                return line;
+            }
             throw new Exception("GetColumn: number incorrect");
         }
 
-        public void SetRow(int number, Cell[] newLine)
+        public void SetRow(int number, Line newLine)
         {
-            if (0 <= number && number < height && newLine.Length == width)
+            if (0 <= number && number < height && newLine.cells.Length == width)
             {
                 for (int i = 0; i < width; i++)
-                    field[i][number] = newLine[i];
+                    field[i][number] = newLine.cells[i];
                 return;
             }
             throw new Exception("SetRow: Invalid parametr");
         }
 
-        public void SetColumn(int number, Cell[] newLine)
+        public void SetColumn(int number, Line newLine)
         {
-            if (0 <= number && number < width && newLine.Length == height)
+            if (0 <= number && number < width && newLine.cells.Length == height)
             {
                 for (int i = 0; i < height; i++)
-                    field[number][i] = newLine[i];
+                    field[number][i] = newLine.cells[i];
                 return;
             }
             throw new Exception("SetColumn: Invalid parametr");

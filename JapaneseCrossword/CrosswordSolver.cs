@@ -8,7 +8,12 @@ namespace JapaneseCrossword
     public class CrosswordSolver : ICrosswordSolver
     {
         private CrosswordField field;
-        private Stack<int> luckyLines = new Stack<int>();
+
+        public override string ToString()
+        {
+            return field != null ? field.ToString() : "";
+        }
+        
         private SolutionStatus Init(string inputFilePath, string outputFilePath)
         {
             if (!File.Exists(inputFilePath)) return SolutionStatus.BadInputFilePath;
@@ -23,24 +28,20 @@ namespace JapaneseCrossword
 
             return SolutionStatus.PartiallySolved;
         }
-
-        public override string ToString()
-        {
-            return field != null ? field.ToString() : "";
-        }
-
+        
         public SolutionStatus Solve(string inputFilePath, string outputFilePath)
         {
             var resultInit = Init(inputFilePath, outputFilePath);
             if (resultInit != SolutionStatus.PartiallySolved) return resultInit;
 
+            var luckyLines = new Queue<int>();
             for(var i = 0; i < field.width + field.height; i++)
             {
-                TryLine(i);
+                TryLine(i, luckyLines);
                 while (luckyLines.Count > 0)
                 {
                     i = -1;
-                    TryLine(luckyLines.Pop());
+                    TryLine(luckyLines.Dequeue(), luckyLines);
                 }
             }
 
@@ -49,72 +50,20 @@ namespace JapaneseCrossword
             return field.HaveFuzzy() ? SolutionStatus.PartiallySolved : SolutionStatus.Solved;
         }
 
-        private void TryLine(int number)
+        private void TryLine(int number, Queue<int> luckyLines)
         {
             var prevLine = GetLine(number);
-            var newLine = TryBlock(0, 0, GetLine(number), GetBlocks(number), 0);
-            if (IsDifferentLine(prevLine, newLine, number < field.width))
-                SetLine(number, newLine);
+            var newLine = GetLine(number).TryBlock();
+            var lucky = Line.IsDifferentCells(prevLine.cells, newLine.cells);
+            
+            if (lucky.Count == 0) return;
+            
+            SetLine(number, newLine);
+            foreach (var i in lucky)
+                luckyLines.Enqueue(number < field.width ? field.width + i : i);
         }
 
-        private Cell[] TryBlock(int width, int pos, Cell[] line, int[] blocks, int nextBlock)
-        {
-            var limit = line.Length
-                - (blocks.Skip(nextBlock).Sum()
-                    + blocks.Skip(nextBlock).Count()
-                    + (width == 0 ? -1 : 0))
-                + 1;
-            for (var i = pos; i < limit; i++)
-            {
-                var can = Enumerable.Range(0, width)
-                    .All(j => i+j < line.Length && line[i + j].CanBe(StateOfCell.Shaded));
-                can = can && Enumerable.Range(pos, i - pos).All(j => line[j].CanBe(StateOfCell.Empty));
-                can = can &&
-                      (nextBlock < blocks.Length ||
-                       Enumerable.Range(i + width, line.Length - i - width).All(j => line[j].CanBe(StateOfCell.Empty)));
-                if (can)
-                {
-                    Enumerable.Range(0, width).All(j => line[i + j].TrySet(StateOfCell.Shaded));
-                    Enumerable.Range(pos, i - pos).All(j => width == 0 || line[j].TrySet(StateOfCell.Empty));
-                    if(nextBlock >= blocks.Length)
-                        Enumerable.Range(i + width, line.Length - i - width).All(j => line[j].TrySet(StateOfCell.Empty));
-                }
-                if (can && nextBlock < blocks.Length)
-                    line = TryBlock(blocks[nextBlock], i + width, line, blocks, nextBlock + 1);
-            }
-
-            return line;
-        }
-
-        private bool IsDifferentLine(Cell[] prevLine, Cell[] newLine, bool isColumn)
-        {
-            if(prevLine.Length != newLine.Length)
-                throw new Exception("IsDifferentLine: lines have a different length");
-            var isDifferentLine = false;
-            for (var i = 0; i < prevLine.Length; i++)
-            {
-                newLine[i].Known();
-                if (!prevLine[i].IsKnown() && newLine[i].IsKnown())
-                {
-                    isDifferentLine = true;
-                    luckyLines.Push(isColumn ? field.width + i : i);
-                }
-            }
-               
-            return isDifferentLine;
-        }
-
-        private int[] GetBlocks(int number)
-        {
-            if (number >= field.width + field.height)
-                throw new Exception("GetBlocks: number incorrect");
-
-            if (number < field.width)
-                return field.vBlocks[number];
-            return field.hBlocks[number - field.width];
-        }
-
-        private Cell[] GetLine(int number)
+        private Line GetLine(int number)
         {
             if (number >= field.width + field.height) 
                 throw new Exception("GetLine: number incorrect");
@@ -124,9 +73,9 @@ namespace JapaneseCrossword
             return field.GetRow(number - field.width);
         }
 
-        private void SetLine(int number, Cell[] newLine)
+        private void SetLine(int number, Line newLine)
         {
-            if (number >= field.width + field.height - 1)
+            if (number >= field.width + field.height)
                 throw new Exception("SetLine: number incorrect");
 
             if (number < field.width)

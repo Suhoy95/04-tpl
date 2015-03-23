@@ -31,8 +31,16 @@ namespace JapaneseCrossword
             view = v;
         }
         public Cell() { }
-        private StateOfCell sost = StateOfCell.Fuzzy;
-        private CheckState view = CheckState.NotChecked;
+        public StateOfCell sost = StateOfCell.Fuzzy;
+        public CheckState view = CheckState.NotChecked;
+
+        public override bool Equals(object obj)
+        {
+            if (obj == null) return false;
+            if (obj.GetType() != this.GetType()) return false;
+            var cell = (Cell) obj;
+            return cell.sost == sost && cell.view == view;
+        }
 
         public char ToChar()
         {
@@ -82,9 +90,10 @@ namespace JapaneseCrossword
             }
         }
 
-        public void Known()
+        public Cell Known()
         {
             view = sost != StateOfCell.Fuzzy ? CheckState.Known : CheckState.NotChecked;
+            return this;
         }
 
         public bool IsKnown()
@@ -100,22 +109,22 @@ namespace JapaneseCrossword
         public static void CellToChar()
         {
             var cell = new Cell(StateOfCell.Empty, CheckState.Ckecked);
-            Assert.AreEqual(cell.ToChar(), '.');
+            Assert.AreEqual('.', cell.ToChar());
             cell = new Cell(StateOfCell.Fuzzy, CheckState.Ckecked);
-            Assert.AreEqual(cell.ToChar(), '?');
+            Assert.AreEqual('?', cell.ToChar());
             cell = new Cell(StateOfCell.Shaded, CheckState.Ckecked);
-            Assert.AreEqual(cell.ToChar(), '*');
+            Assert.AreEqual('*', cell.ToChar());
         }
 
         [Test]
         public static void CellCanBe()
         {
             var cell = new Cell(StateOfCell.Empty, CheckState.Known);
-            Assert.AreEqual(cell.CanBe(StateOfCell.Shaded), false);
-            Assert.AreEqual(cell.CanBe(StateOfCell.Empty), true);
+            Assert.AreEqual(false, cell.CanBe(StateOfCell.Shaded));
+            Assert.AreEqual(true, cell.CanBe(StateOfCell.Empty));
             cell = new Cell(StateOfCell.Shaded, CheckState.Known);
-            Assert.AreEqual(cell.CanBe(StateOfCell.Empty), false);
-            Assert.AreEqual(cell.CanBe(StateOfCell.Shaded), true);
+            Assert.AreEqual(false, cell.CanBe(StateOfCell.Empty));
+            Assert.AreEqual(true, cell.CanBe(StateOfCell.Shaded));
         }
     }
 }

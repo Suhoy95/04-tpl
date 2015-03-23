@@ -48,8 +48,10 @@
     <Compile Include="CrosswordField.cs" />
     <Compile Include="CrosswordSolver.cs" />
     <Compile Include="CrosswordSolverTests.cs" />
+    <Compile Include="FieldBuilder.cs" />
     <Compile Include="FileNameCorrector.cs" />
     <Compile Include="ICrosswordSolver.cs" />
+    <Compile Include="Line.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SolutionStatus.cs" />

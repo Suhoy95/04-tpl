@@ -23,13 +23,13 @@ namespace JapaneseCrossword
         [Test]
         public static void CorrectFileName()
         {
-            Assert.AreEqual(FileNameCorrecter.IsCorrectedFileName("test.txt"), true);
+            Assert.AreEqual(true, FileNameCorrecter.IsCorrectedFileName("test.txt"));
         }
 
         [Test]
         public static void InCorrectFileName()
         {
-            Assert.AreEqual(FileNameCorrecter.IsCorrectedFileName("///.&*#"), false);
+            Assert.AreEqual(false, FileNameCorrecter.IsCorrectedFileName("///.&*#"));
         }
     }
 }

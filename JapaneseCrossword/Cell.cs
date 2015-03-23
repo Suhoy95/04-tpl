@@ -1,20 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using NUnit.Framework;
 
 namespace JapaneseCrossword
 {
-    enum Sost
+    enum StateOfCell
     {
         Empty,
         Fuzzy,
         Shaded
     }
 
-    enum Check
+    enum CheckState
     {
         Ckecked,
         NotChecked,
@@ -29,57 +25,57 @@ namespace JapaneseCrossword
             view = cell.view;
         }
 
-        public Cell(Sost s, Check v)
+        public Cell(StateOfCell s, CheckState v)
         {
             sost = s;
             view = v;
         }
         public Cell() { }
-        private Sost sost = Sost.Fuzzy;
-        private Check view = Check.NotChecked;
+        private StateOfCell sost = StateOfCell.Fuzzy;
+        private CheckState view = CheckState.NotChecked;
 
         public char ToChar()
         {
             switch (sost)
             {
-                case Sost.Empty:
+                case StateOfCell.Empty:
                     return '.';
-                case Sost.Fuzzy:
+                case StateOfCell.Fuzzy:
                     return '?';
-                case Sost.Shaded:
+                case StateOfCell.Shaded:
                     return '*';
             }
 
             throw new Exception("SostToChar: incorrect sost");
         }
 
-        public bool CanBe(Sost s)
+        public bool CanBe(StateOfCell s)
         {
             switch (view)
             {
-                case Check.NotChecked:
+                case CheckState.NotChecked:
                     return true;
-                case Check.Ckecked:
+                case CheckState.Ckecked:
                     return true;
-                case Check.Known:
+                case CheckState.Known:
                     return s == sost;
             }
             throw new Exception("CanBe: incorret view");
         }
 
-        public bool TrySet(Sost s)
+        public bool TrySet(StateOfCell s)
         {
             {
                 switch (view)
                 {
-                    case Check.NotChecked:
+                    case CheckState.NotChecked:
                         sost = s;
-                        view = Check.Ckecked;
+                        view = CheckState.Ckecked;
                         return true;
-                    case Check.Ckecked:
-                        sost = s == sost ? s : Sost.Fuzzy;
-                        return s == sost || sost == Sost.Fuzzy;
-                    case Check.Known:
+                    case CheckState.Ckecked:
+                        sost = s == sost ? s : StateOfCell.Fuzzy;
+                        return s == sost || sost == StateOfCell.Fuzzy;
+                    case CheckState.Known:
                         return s == sost;
                 }
                 throw new Exception("CanBe: incorret view");
@@ -88,12 +84,12 @@ namespace JapaneseCrossword
 
         public void Known()
         {
-            view = sost != Sost.Fuzzy ? Check.Known : Check.NotChecked;
+            view = sost != StateOfCell.Fuzzy ? CheckState.Known : CheckState.NotChecked;
         }
 
         public bool IsKnown()
         {
-            return view == Check.Known;
+            return view == CheckState.Known;
         }
     }
 
@@ -103,23 +99,23 @@ namespace JapaneseCrossword
         [Test]
         public static void CellToChar()
         {
-            var cell = new Cell(Sost.Empty, Check.Ckecked);
+            var cell = new Cell(StateOfCell.Empty, CheckState.Ckecked);
             Assert.AreEqual(cell.ToChar(), '.');
-            cell = new Cell(Sost.Fuzzy, Check.Ckecked);
+            cell = new Cell(StateOfCell.Fuzzy, CheckState.Ckecked);
             Assert.AreEqual(cell.ToChar(), '?');
-            cell = new Cell(Sost.Shaded, Check.Ckecked);
+            cell = new Cell(StateOfCell.Shaded, CheckState.Ckecked);
             Assert.AreEqual(cell.ToChar(), '*');
         }
 
         [Test]
         public static void CellCanBe()
         {
-            var cell = new Cell(Sost.Empty, Check.Known);
-            Assert.AreEqual(cell.CanBe(Sost.Shaded), false);
-            Assert.AreEqual(cell.CanBe(Sost.Empty), true);
-            cell = new Cell(Sost.Shaded, Check.Known);
-            Assert.AreEqual(cell.CanBe(Sost.Empty), false);
-            Assert.AreEqual(cell.CanBe(Sost.Shaded), true);
+            var cell = new Cell(StateOfCell.Empty, CheckState.Known);
+            Assert.AreEqual(cell.CanBe(StateOfCell.Shaded), false);
+            Assert.AreEqual(cell.CanBe(StateOfCell.Empty), true);
+            cell = new Cell(StateOfCell.Shaded, CheckState.Known);
+            Assert.AreEqual(cell.CanBe(StateOfCell.Empty), false);
+            Assert.AreEqual(cell.CanBe(StateOfCell.Shaded), true);
         }
     }
 }

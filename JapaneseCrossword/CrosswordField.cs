@@ -9,31 +9,11 @@ namespace JapaneseCrossword
 {
     class CrosswordField
     {
-        private Cell[][] field;
-        public int[][] vBlocks { get; private set; }
-        public int[][] gBlocks { get; private set; }
-        public int width { get; private set; }
-        public int height { get; private set; }
-
-        public CrosswordField(string filename)
-        {
-            var lines = File.ReadAllLines(filename);
-            height = int.Parse(lines[0].Split(':')[1]);
-
-            gBlocks = new int[height][];
-            for (var i = 1; i < height + 1; i++)
-                gBlocks[i - 1] = lines[i].Split(' ').Select(int.Parse).ToArray();
-
-            width = int.Parse(lines[height + 1].Split(':')[1]);
-
-            vBlocks = new int[width][];
-            for (var i = height + 2; i < lines.Length; i++)
-                vBlocks[i - height - 2] = lines[i].Split(' ').Select(int.Parse).ToArray();
-
-            field = new Cell[width][];
-            for (var i = 0; i < field.Length; i++)
-                field[i] = Enumerable.Range(0, height).Select(cell => new Cell()).ToArray();;
-        }
+        public Cell[][] field;
+        public int[][] vBlocks;
+        public int[][] hBlocks;
+        public int width;
+        public int height;
 
         public override string ToString()
         {
@@ -52,10 +32,15 @@ namespace JapaneseCrossword
         public bool IsCorrect()
         {
             var columnSum = vBlocks.Sum(block => block.Sum());
-            var rawSum = gBlocks.Sum(block => block.Sum());
+            var rawSum = hBlocks.Sum(block => block.Sum());
             return vBlocks.All(block => block.Sum() <= height - (block.Length - 1)) &&
-                   gBlocks.All(block => block.Sum() <= width - (block.Length - 1)) &&
+                   hBlocks.All(block => block.Sum() <= width - (block.Length - 1)) &&
                    columnSum == rawSum && rawSum <= width * height;
+        }
+
+        public bool HaveFuzzy()
+        {
+            return field.Any(column => column.Any(cell => cell.ToChar() == '?'));
         }
 
         public Cell[] GetRow(int number)
@@ -68,7 +53,7 @@ namespace JapaneseCrossword
         public Cell[] GetColumn(int number)
         {
             if (0 <= number && number < width)
-                return Enumerable.Range(0, height).Select(x => new Cell(field[number][x])).ToArray();
+                return Enumerable.Range(0, height).Select(rawIndex => new Cell(field[number][rawIndex])).ToArray();
             throw new Exception("GetColumn: number incorrect");
         }
 
@@ -92,11 +77,6 @@ namespace JapaneseCrossword
                 return;
             }
             throw new Exception("SetColumn: Invalid parametr");
-        }
-
-        public bool HaveFuzzy()
-        {
-            return field.Any(column => column.Any(cell => cell.ToChar() == '?'));
         }
     }
 }

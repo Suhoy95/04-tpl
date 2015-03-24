@@ -30,14 +30,12 @@ namespace JapaneseCrossword
 
         public Line TryBlock()
         {
-            for(var i = 0; i < GetLimit(0); i++)
-                TryBlock(blocks[0], i, 1);
-            return this;
+            return TryBlock(blocks[0], 0, 1);
         }
 
-        private void TryBlock(int width, int position, int nextBlock)
+        private Line TryBlock(int width, int position, int nextBlock)
         {
-            var limit = GetLimit(nextBlock);
+            var limit = GetLimit(nextBlock - 1);
             for (var i = position; i < limit; i++)
                 if (BlockCanBe(position, i, width, limit))
                 {
@@ -45,22 +43,19 @@ namespace JapaneseCrossword
                         throw new Exception("Try Block: can not to set block");
 
                     if (nextBlock < blocks.Length)
-                        TryBlock(blocks[nextBlock], i + width, nextBlock + 1);
+                        TryBlock(blocks[nextBlock], i + width + 1, nextBlock + 1);
                 }
+            return this;
         }
-
         
-        
-        public int GetLimit(int nextBlock)
+        public int GetLimit(int indexBlock)
         {
-            if (blocks.Length == 1)
-                return cells.Length - blocks[0] + 1;
-
             return cells.Length
-                    - blocks.Skip(nextBlock).Sum()
-                    - blocks.Skip(nextBlock).Count();
+                    - blocks.Skip(indexBlock + 1).Sum()
+                    - blocks.Skip(indexBlock + 1).Count()
+                    - blocks[indexBlock] + 1;
         }
-
+        
         public bool BlockCanBe(int position, int positionOfBlock, int width, int limit)
         {
             var amountEmptyCells = limit == cells.Length ? limit - (positionOfBlock + width) : 1;
@@ -95,35 +90,74 @@ namespace JapaneseCrossword
     {
         private Line line = new Line();
 
+        private void CreateLine(int amount, int[] blocks)
+        {
+            line.cells = Enumerable.Range(0, amount).Select(i => new Cell()).ToArray();
+            line.blocks = blocks;
+        }
+
         [Test]
         public void CalculateOfLimit()
         {
-            line.cells = new Cell[10];
-            line.blocks = new[]{1, 2, 3};
-            Assert.AreEqual(1, line.GetLimit(0) );
-            Assert.AreEqual(3, line.GetLimit(1) );
-            Assert.AreEqual(6, line.GetLimit(2) );
-            Assert.AreEqual(10, line.GetLimit(3) );
+            CreateLine(10, new []{1, 2, 3});
+            Assert.AreEqual(3, line.GetLimit(0) );
+            Assert.AreEqual(5, line.GetLimit(1) );
+            Assert.AreEqual(8, line.GetLimit(2) );
         }
-
-        [Test]
-        public void CalculateOfLimitForOneBlock()
-        {
-            line.cells = new Cell[5];
-            line.blocks = new[] {4};
-            Assert.AreEqual(2, line.GetLimit(0));
-        }
-
+        
         [Test]
         public void SimpleTryLines()
         {
-            line.cells = Enumerable.Range(0, 4).Select(i => new Cell()).ToArray();
-            line.blocks = new[] {4};
+            CreateLine(4, new []{4});
             var result = Enumerable.Range(0, 4)
                                    .Select(i => new Cell(StateOfCell.Shaded, CheckState.Ckecked))
                                    .ToArray();
             line.TryBlock();
             Assert.AreEqual(result, line.cells);
+        }
+
+        [Test]
+        public void TryLines_FindShadedPoint()
+        {
+            CreateLine(5, new []{4});
+            var fuzzyIndex = new[] {0, 4};
+            var result = Enumerable.Range(0, 5)
+                .Select(i => new Cell(fuzzyIndex.Contains(i) ? StateOfCell.Fuzzy: StateOfCell.Shaded,CheckState.Ckecked))
+                .ToArray();
+            Assert.AreEqual(result, line.TryBlock().cells);
+        }
+
+        [Test]
+        public void TryLines_FindShadedPoint2()
+        {
+            CreateLine(6, new []{4});
+            var shadedIndex = new[] {2, 3};
+            var result = Enumerable.Range(0, 6)
+                .Select(i => new Cell(shadedIndex.Contains(i) ? StateOfCell.Shaded : StateOfCell.Fuzzy, CheckState.Ckecked))
+                .ToArray();
+            Assert.AreEqual(result, line.TryBlock().cells);
+        }
+
+        [Test]
+        public void TryLines_TwoBlockSimple()
+        {
+            CreateLine(6, new []{2, 3});
+            var emptyIndex = new[] {2};
+            var result = Enumerable.Range(0, 6)
+                .Select(i => new Cell(emptyIndex.Contains(i) ? StateOfCell.Empty : StateOfCell.Shaded, CheckState.Ckecked))
+                .ToArray();
+            Assert.AreEqual(result, line.TryBlock().cells);
+        }
+
+        [Test]
+        public void TryLines_TwoBlock_FindShaded()
+        {
+            CreateLine(7, new[] { 2, 3 });
+            var shadedIndex = new[] {1, 4, 5};
+            var result = Enumerable.Range(0, 7)
+                .Select(i => new Cell(shadedIndex.Contains(i) ? StateOfCell.Shaded : StateOfCell.Fuzzy, CheckState.Ckecked))
+                .ToArray();
+            Assert.AreEqual(result, line.TryBlock().cells);
         }
     }
 }

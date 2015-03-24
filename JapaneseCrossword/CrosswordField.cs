@@ -23,7 +23,7 @@ namespace JapaneseCrossword
             {
                 for (var x = 0; x < width; x++)
                     ans.Append(field[x][y].ToChar());
-                ans.Append("\r\n");
+                ans.Append(Environment.NewLine);
             }
 
             return ans.ToString();

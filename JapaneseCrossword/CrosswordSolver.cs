@@ -54,7 +54,7 @@ namespace JapaneseCrossword
         {
             var prevLine = GetLine(number);
             var newLine = GetLine(number).TryBlock();
-            var lucky = Line.IsDifferentCells(prevLine.cells, newLine.cells);
+            var lucky = Line.FindDifferentCells(prevLine.cells, newLine.cells);
             
             if (lucky.Count == 0) return;
             

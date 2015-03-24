@@ -9,7 +9,7 @@ namespace JapaneseCrossword
 {
     class Line
     {
-        public static List<int> IsDifferentCells(Cell[] prevCells, Cell[] newCells)
+        public static List<int> FindDifferentCells(Cell[] prevCells, Cell[] newCells)
         {
             if (prevCells.Length != newCells.Length)
                 throw new Exception("IsDifferentLine: lines have a different length");
@@ -37,9 +37,9 @@ namespace JapaneseCrossword
         {
             var limit = GetLimit(nextBlock - 1);
             for (var i = position; i < limit; i++)
-                if (BlockCanBe(position, i, width, limit))
+                if (BlockCanBe(position, i, width, nextBlock))
                 {
-                    if(!BlockTrySet(position, i, width, limit))
+                    if(!BlockTrySet(position, i, width, nextBlock))
                         throw new Exception("Try Block: can not to set block");
 
                     if (nextBlock < blocks.Length)
@@ -56,13 +56,24 @@ namespace JapaneseCrossword
                     - blocks[indexBlock] + 1;
         }
         
-        public bool BlockCanBe(int position, int positionOfBlock, int width, int limit)
+        public bool BlockCanBe(int position, int positionOfBlock, int width, int nextBlock)
         {
-            var amountEmptyCells = limit == cells.Length ? limit - (positionOfBlock + width) : 1;
-            amountEmptyCells = positionOfBlock + width == cells.Length ? 0 : amountEmptyCells;
+            var amountEmptyCells = nextBlock == blocks.Length ? cells.Length - (positionOfBlock + width) : 1;
             return CellsCanBe(position, positionOfBlock - position, StateOfCell.Empty)
                    && CellsCanBe(positionOfBlock, width, StateOfCell.Shaded)
-                   && CellsCanBe(positionOfBlock + width, amountEmptyCells, StateOfCell.Empty);
+                   && CellsCanBe(positionOfBlock + width, amountEmptyCells, StateOfCell.Empty) 
+                   && ( nextBlock >= blocks.Length || 
+                            Foo(blocks[nextBlock], positionOfBlock + width + 1, nextBlock + 1));
+        }
+
+        private bool Foo(int width, int position, int nextBlock)
+        {
+            var limit = GetLimit(nextBlock - 1);
+            for(var i = position; i < limit; i++)
+                if (BlockCanBe(position, i, width, nextBlock))
+                    return true;
+
+            return false;
         }
 
         public bool CellsCanBe(int position, int width, StateOfCell state)
@@ -70,10 +81,9 @@ namespace JapaneseCrossword
             return Enumerable.Range(position, width).All(i => cells[i].CanBe(state));
         }
 
-        public bool BlockTrySet(int position, int positionOfBlock, int width, int limit)
+        public bool BlockTrySet(int position, int positionOfBlock, int width, int nextBlock)
         {
-            var amountEmptyCells = limit == cells.Length ? limit - (positionOfBlock + width) : 1;
-            amountEmptyCells = positionOfBlock + width == cells.Length ? 0 : amountEmptyCells;
+            var amountEmptyCells = nextBlock == blocks.Length ? cells.Length - (positionOfBlock + width) : 1;
             return TrySetCells(position, positionOfBlock - position, StateOfCell.Empty)
                    && TrySetCells(positionOfBlock, width, StateOfCell.Shaded)
                    && TrySetCells(positionOfBlock + width, amountEmptyCells, StateOfCell.Empty);

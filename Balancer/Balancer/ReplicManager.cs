@@ -13,6 +13,8 @@ namespace Balancer
     {
         private string[] ips;
         private int index;
+        private Queue<int> grayList = new Queue<int>();
+        private int timeLiveInGrayList = 10000;
 
         public ReplicManager(string filename)
         {
@@ -37,17 +39,48 @@ namespace Balancer
                 try{
                     task.Dispose();   //Если задача завершится во время перехода, возникнет исключение,
                 }catch(Exception e){} //Но ждать пока система свернет этот обьект - еще хуже
+                AddReplicaToGrayList();
             }
 
             return null;
+        }
+
+        private void AddReplicaToGrayList()
+        {
+            lock (grayList)
+            {
+                grayList.Enqueue(index);
+                new Task(DeliteIpInGrayList);
+            }
+        }
+
+        private void DeliteIpInGrayList()
+        {
+            Thread.Sleep(timeLiveInGrayList);
+            lock (grayList)
+            {
+                if (grayList.Count > 0)
+                    grayList.Dequeue();
+            }
         }
         
         private string GetIp()
         {
             lock (ips)
             {
-                index = (index + 1)%ips.Length;
-                return ips[index];
+                var i = 0;
+                do
+                {
+                    index = (index + 1)%ips.Length;
+                } while (grayList.Contains(index) && i++ < ips.Length);
+                
+                lock (grayList)
+                {
+                    if (i <= ips.Length || !grayList.Any())
+                        return ips[index];
+
+                    return ips[grayList.Dequeue()];
+                }
             }
         }
     }

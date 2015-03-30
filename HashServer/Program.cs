@@ -15,6 +15,8 @@ namespace HashServer
 
 		static void Main(string[] args)
 		{
+            Console.WriteLine("Write port: ");
+		    var port = int.Parse(Console.ReadLine());
 			XmlConfigurator.Configure();
 			try
 			{
@@ -24,7 +26,7 @@ namespace HashServer
 				var listenerSync = new ListenerSync(port, "methodSync", OnContext);
 				listenerSync.Start();
 
-				log.InfoFormat("Server started!");
+				log.InfoFormat("Server started on port: {0}!", port);
 				Console.WriteLine("Enter server delay in ms");
 				while (true)
 				{
@@ -86,7 +88,6 @@ namespace HashServer
 				return hasher.ComputeHash(data);
 		}
 
-		private const int port = 20000;
 		private static readonly byte[] Key = Encoding.UTF8.GetBytes("Контур.Шпора");
 		private static readonly ILog log = LogManager.GetLogger(typeof(Program));
 	}
